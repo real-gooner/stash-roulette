@@ -20,7 +20,7 @@ jobs:
       - name: Checksum
         run: cd dist && sha256sum stash-roulette.user.js > stash-roulette.user.js.sha256
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/stash-roulette.user.js
