@@ -1,0 +1,14 @@
+name: Site changed and attaching broke
+description: Attach stopped working after an X or Discord update
+labels: [adapter]
+body:
+  - type: dropdown
+    id: site
+    attributes: { label: Site, options: [x.com, discord.com] }
+    validations: { required: true }
+  - type: textarea
+    id: out
+    attributes:
+      label: Output of the check in docs/SITE-ADAPTERS.md
+      description: Run the console snippet there and paste what it prints.
+    validations: { required: true }

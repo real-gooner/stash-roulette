@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash Roulette Demo</title>
+<style>
+  :root { --bg: #0b0f14; --card: #141a21; --line: #26303b; --text: #e7e9ea; --muted: #8b98a5; --accent: #4db5f5; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 620px; margin: 0 auto; padding: 32px 16px 120px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .lede { color: var(--muted); margin: 0 0 20px; }
+  .note { background: rgba(77,181,245,.08); border: 1px solid rgba(77,181,245,.3); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; color: #c9d1d9; margin-bottom: 20px; }
+  .note b { color: var(--text); }
+  .composer { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+  .box { min-height: 72px; outline: none; font-size: 17px; padding: 4px 2px; }
+  .box:empty::before { content: attr(data-placeholder); color: var(--muted); }
+  .media { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
+  .media figure { margin: 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 1; }
+  .media img, .media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .media button { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0,0,0,.7); color: #fff; cursor: pointer; }
+  .bar { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; color: var(--muted); font-size: 13px; }
+  .send { background: #3a4552; color: #9aa6b2; border: none; border-radius: 999px; padding: 8px 16px; font-weight: 600; cursor: not-allowed; }
+  input[type=file] { display: none; }
+  .status { margin-top: 14px; color: var(--muted); font-size: 13px; min-height: 20px; }
+  ol { color: var(--muted); font-size: 14px; padding-left: 20px; }
+  ol b { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Stash Roulette demo</h1>
+  <p class="lede">Try the real script on a stand-in message box, with a sample folder made in your browser.</p>
+  <div class="note"><b>Nothing leaves your browser.</b> The sample pictures and clips are drawn on this page and stored in this site's private browser storage. The folder dialog is replaced by the sample folder. Needs Chrome or Edge.</div>
+
+  <div class="composer" data-testid="tweetCompose">
+    <div class="box" contenteditable="true" data-testid="tweetTextarea_0" data-placeholder="Write something…" aria-label="Message"></div>
+    <div class="media" id="media"></div>
+    <input type="file" id="file" multiple accept="image/*,video/*">
+    <div class="bar"><span id="count">No media attached</span><button class="send" disabled title="Demo only">Post</button></div>
+  </div>
+  <div class="status" id="status">Preparing sample folder…</div>
+
+  <ol>
+    <li>Click the <b>dice button</b> at the bottom right, then click it again to open the panel.</li>
+    <li>Click into the message box, then click any <b>tile</b> to attach it.</li>
+    <li>Try the <b>dice</b> in the panel for a random pick, <b>Shuffle</b>, <b>Select</b> for several files, the filters, and hover a clip.</li>
+    <li>Drag the panel by its header, or drag the dice button: the panel hides while the button moves.</li>
+  </ol>
+</main>
+
+<script>
+(async () => {
+  const status = document.getElementById('status');
+  const media = document.getElementById('media');
+  const input = document.getElementById('file');
+  const count = document.getElementById('count');
+
+  // Show what the composer received, like a real site would.
+  input.addEventListener('change', () => {
+    for (const f of input.files) {
+      const fig = document.createElement('figure');
+      const url = URL.createObjectURL(f);
+      const el = f.type.startsWith('video') ? Object.assign(document.createElement('video'), { src: url, muted: true, loop: true, autoplay: true, playsInline: true }) : Object.assign(new Image(), { src: url, alt: f.name });
+      const x = Object.assign(document.createElement('button'), { textContent: '×', title: 'Remove' });
+      x.onclick = () => { fig.remove(); URL.revokeObjectURL(url); update(); };
+      fig.append(el, x);
+      media.append(fig);
+    }
+    input.value = '';
+    update();
+  });
+  const update = () => { const n = media.children.length; count.textContent = n ? n + ' attached' : 'No media attached'; };
+
+  if (!navigator.storage?.getDirectory || !('MediaRecorder' in window)) {
+    status.textContent = 'This browser cannot run the demo. Please use Chrome or Edge.';
+    return;
+  }
+
+  const root = await navigator.storage.getDirectory();
+  const dir = await root.getDirectoryHandle('Sample stash', { create: true });
+  const exists = async name => { try { await dir.getFileHandle(name); return true; } catch { return false; } };
+  const save = async (name, blob) => { const fh = await dir.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(blob); await w.close(); };
+
+  const palettes = [['#ff6b6b', '#ffd93d'], ['#6bcBef', '#3d5af1'], ['#a3e635', '#0d9488'], ['#f472b6', '#7c3aed'], ['#fb923c', '#be123c'], ['#38bdf8', '#22d3ee'], ['#facc15', '#f97316'], ['#c084fc', '#4f46e5']];
+  const words = ['sunset', 'beach', 'city', 'forest', 'snow', 'party', 'cat', 'dog', 'coffee', 'mountain', 'neon', 'retro'];
+
+  function paint(g, w, h, i, t = 0) {
+    const [a, b] = palettes[i % palettes.length];
+    const grad = g.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, a); grad.addColorStop(1, b);
+    g.fillStyle = grad; g.fillRect(0, 0, w, h);
+    g.globalAlpha = 0.25; g.fillStyle = '#fff';
+    for (let k = 0; k < 5; k++) {
+      const r = 30 + ((i * 37 + k * 53) % 90);
+      const x = ((i * 97 + k * 131) % w) + Math.sin(t + k) * 40;
+      const y = ((i * 61 + k * 89) % h) + Math.cos(t + k) * 30;
+      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    }
+    g.globalAlpha = 1;
+    g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, h - 70, w, 70);
+    g.fillStyle = '#fff'; g.font = 'bold 34px sans-serif';
+    g.fillText(words[i % words.length] + ' #' + (i + 1), 24, h - 24);
+  }
+
+  let made = 0;
+  for (let i = 0; i < 24; i++) {
+    const name = `photo-${String(i + 1).padStart(2, '0')}-${words[i % words.length]}.jpg`;
+    if (await exists(name)) continue;
+    const c = document.createElement('canvas'); c.width = 640; c.height = 480 + (i % 3) * 80;
+    paint(c.getContext('2d'), c.width, c.height, i);
+    await save(name, await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85)));
+    status.textContent = `Preparing sample folder… ${++made}`;
+  }
+  const clipLengths = [3, 5, 8, 12];
+  for (let i = 0; i < clipLengths.length; i++) {
+    const secs = clipLengths[i];
+    const name = `clip-${i + 1}-${secs}s.webm`;
+    if (await exists(name)) continue;
+    status.textContent = `Recording sample clip ${i + 1} of ${clipLengths.length} (${secs}s)…`;
+    const c = document.createElement('canvas'); c.width = 480; c.height = 360;
+    const g = c.getContext('2d');
+    const rec = new MediaRecorder(c.captureStream(30), { mimeType: 'video/webm' });
+    const chunks = [];
+    rec.ondataavailable = e => chunks.push(e.data);
+    const done = new Promise(r => (rec.onstop = r));
+    rec.start();
+    const t0 = performance.now();
+    await new Promise(resolve => {
+      const frame = () => {
+        const t = (performance.now() - t0) / 1000;
+        paint(g, c.width, c.height, 30 + i, t * 2);
+        if (t < secs) requestAnimationFrame(frame); else resolve();
+      };
+      frame();
+    });
+    rec.stop(); await done;
+    await save(name, new Blob(chunks, { type: 'video/webm' }));
+  }
+
+  // Replace the folder dialog with the sample folder, then load the real script.
+  window.showDirectoryPicker = async () => dir;
+  const s = document.createElement('script');
+  s.src = 'stash-roulette.demo.js';
+  s.onload = () => { status.textContent = 'Ready. Click the dice button at the bottom right.'; };
+  s.onerror = () => { status.textContent = 'Could not load the script. Run npm run build:demo first.'; };
+  document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>

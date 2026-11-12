@@ -1,0 +1,5 @@
+.DS_Store
+node_modules/
+dist/
+*.log
+demo/stash-roulette.demo.js

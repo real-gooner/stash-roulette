@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><title>Mock composer</title>
+<body style="font-family:sans-serif;background:#000;color:#ddd;margin:0">
+<div data-testid="tweetCompose" style="padding:40px"><div data-testid="tweetTextarea_0" contenteditable="true" style="border:1px solid #555;min-height:60px;padding:8px">Type here…</div><input type="file" id="f" multiple></div>
+<div id="out">no file yet</div>
+<script>document.getElementById('f').addEventListener('change',e=>{document.getElementById('out').textContent='attached: '+[...e.target.files].map(f=>f.name+' '+f.size).join(', ')})</script>
