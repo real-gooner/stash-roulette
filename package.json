@@ -1,6 +1,6 @@
 {
   "name": "stash-roulette",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Browse a local media folder with previews and attach a picked or random file on X and Discord.",
   "license": "MIT",
   "type": "module",
