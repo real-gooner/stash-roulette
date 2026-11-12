@@ -4,6 +4,13 @@ All notable changes are listed here. Format: [Keep a Changelog](https://keepacha
 
 ## [Unreleased]
 
+### Added
+- `@compatible` / `@incompatible` header lines so script sites show that only Chrome and Edge are supported.
+
+### Changed
+- The header no longer contains `@homepageURL`, `@supportURL`, `@updateURL` or `@downloadURL`. Script managers keep updating from the URL the script was installed from.
+- `@namespace` is now `stash-roulette`. Script managers treat this as a new script: remove the old copy after installing, and pick the folder again.
+
 ## [0.9.0] - not yet released
 
 First public version under the new name.
